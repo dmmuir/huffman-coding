@@ -1,86 +1,27 @@
+#[macro_use]
+extern crate clap;
+
+mod cli;
 mod huffman_tree;
+mod compress;
 
-use std::collections::HashMap;
 use std::fs;
-use std::hash::Hash;
 
-use huffman_tree::codes::{Codes, bytes_from};
+use compress::{encode};
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let bytes: Vec<u8> = fs::read(&args[2]).unwrap();
-    let size = bytes.len();
-    let (tokens, freqs): (Vec<u8>, Vec<usize>) = freq_table(&bytes).into_iter().unzip();
-    let token_set: Vec<u8>;
-    let dictionary: Vec<(u8, Codes)> = match args[1].as_str() {
-        "sort" => {
-            let mut sorted_dict: Vec<(u8, usize)> =
-                tokens.into_iter().zip(freqs.into_iter()).collect();
-            sorted_dict.sort_by_key(|record| record.1);
-            let (ts, freqs): (Vec<u8>, Vec<usize>) = sorted_dict.into_iter().unzip();
-            token_set = ts;
-            huffman_tree::with_vecdeque(&token_set, freqs, size)
-        },
-        "sorted" => huffman_tree::with_vecdeque(&tokens, freqs, size),
-        _ => huffman_tree::with_min_heap(&tokens, freqs, size),
-    };
-
-    std_out(&dictionary);
-    write_codes(dictionary, &bytes);
-    write_freq_table(&bytes);
-}
-
-fn std_out(dictionary: &[(u8, Codes)]) {
-    let mut bytes: Vec<(u8, usize)> = dictionary
-        .into_iter()
-        .map(|(token, code)| (*token, bytes_from(code.to_vec()).len()))
-        .collect();
-    bytes.sort_by_key(|b| b.1);
-    bytes.iter().for_each(|b| {
-        println!("{:?}", b)
-    });
-    println!("{}", bytes.len());
-}
-
-fn word_tokens_from<'a>(text: &'a str) -> Vec<&'a str> {
-    text.split_whitespace().collect()
-}
-
-fn write_codes<T: Hash + Eq>(dict: Vec<(T, Codes)>, tokens: &[T]) {
-    let map: HashMap<T, Codes> = dict.into_iter().collect();
-    let mut buffer = Vec::with_capacity(tokens.len());
-    for token in tokens {
-        if let Some(code) = map.get(&token) {
-            buffer.push(code.to_owned());
-        }
-    }
+    let matches = cli::app();
     
-    let args: Vec<String> = std::env::args().collect();
-    let buffer: Vec<u8> = bytes_from(buffer.into_iter().flatten().collect());
-    fs::write(&args[3], buffer).unwrap();
+    let input_file = matches.value_of("filepath").unwrap();
+    let source = fs::read(input_file).unwrap();
+    let action = matches.value_of("decode");
+
+    let result = match action {
+        None => encode(&source),
+        Some(_) => vec![],
+    };
+    
+    fs::write(format!("{}.huff", input_file), result).unwrap();
+
 }
 
-fn write_freq_table(bytes: &[u8]) {
-    let (tokens, freqs): (Vec<u8>, Vec<usize>) = freq_table(bytes).into_iter().unzip();
-    let freq_buffer: Vec<u8> = freqs.into_iter().map(|b| b.to_be_bytes().to_vec()).flatten().collect();
-    let buffer: Vec<u8> = vec![tokens, freq_buffer].concat();
-
-    let args: Vec<String> = std::env::args().collect();
-    let filepath = format!("{}.freq_table", &args[3]);
-    fs::write(filepath, buffer).unwrap();
-}
-
-fn freq_table<'a, T>(data: &'a [T]) -> HashMap<&'a T, usize>
-where
-    T: std::hash::Hash + Eq + Sized,
-{
-    let mut map = HashMap::with_capacity(data.len());
-
-    for token in data {
-        let count = map.entry(token).or_insert(0);
-        *count += 1;
-    }
-
-    map.shrink_to_fit();
-    map
-}
