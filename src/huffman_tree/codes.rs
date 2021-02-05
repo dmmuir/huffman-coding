@@ -9,3 +9,15 @@ pub fn bytes_from(bits: Codes) -> Vec<u8> {
         })
         .collect()
 }
+
+pub fn codes_from(bytes: Vec<u8>) -> Vec<bool> {
+    bytes.chunks(8)
+        .map(|chunk| {
+            chunk
+                .into_iter()
+                .fold(0, |result, bit| (result << 1) ^ *bit as u8)
+        });
+        //.collect()
+
+    Vec::new()
+}

@@ -2,16 +2,16 @@
 extern crate clap;
 
 mod cli;
-mod huffman_tree;
 mod compress;
+mod huffman_tree;
 
 use std::fs;
 
-use compress::{encode};
+use compress::encode;
 
 fn main() {
     let matches = cli::app();
-    
+
     let input_file = matches.value_of("filepath").unwrap();
     let source = fs::read(input_file).unwrap();
     let action = matches.value_of("decode");
@@ -20,8 +20,6 @@ fn main() {
         None => encode(&source),
         Some(_) => vec![],
     };
-    
+
     fs::write(format!("{}.huff", input_file), result).unwrap();
-
 }
-

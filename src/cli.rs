@@ -1,4 +1,4 @@
-use clap::{ArgMatches, App, Arg};
+use clap::{App, Arg, ArgMatches};
 
 pub fn app() -> ArgMatches<'static> {
     App::new("huff")

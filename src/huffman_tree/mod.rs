@@ -9,7 +9,7 @@ use std::hash::{Hash, Hasher};
 use codes::Codes;
 use node::Node;
 
-pub fn with_vecdeque<T>(data: &[T], freqs: Vec<usize>, size: usize) -> Vec<(T, Codes)>
+pub fn with_vecdeque<T>(data: &[T], freqs: &[usize], size: usize) -> Vec<(T, Codes)>
 where
     T: Debug + Hash + Clone,
 {

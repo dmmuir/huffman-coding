@@ -22,7 +22,7 @@ fn min<T>(
     second_queue.pop_front()
 }
 
-pub fn from<T>(data: &[T], freq: Vec<usize>, size: usize) -> Option<Node<T>>
+pub fn from<T>(data: &[T], freq: &[usize], size: usize) -> Option<Node<T>>
 where
     T: Debug + Clone,
 {
@@ -30,7 +30,7 @@ where
     let mut second_queue = VecDeque::with_capacity(size);
 
     data.into_iter().zip(freq.into_iter()).for_each(|(d, f)| {
-        first_queue.push_back(Node::new_leaf(d.clone(), f));
+        first_queue.push_back(Node::new_leaf(d.clone(), *f));
     });
 
     while !(first_queue.is_empty() && second_queue.len() == 1) {
