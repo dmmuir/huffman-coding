@@ -108,8 +108,11 @@ mod test {
 
         let size = array.len();
 
-        let (actual_array, codes): (Vec<u8>, Vec<Codes>) =
-            with_vecdeque(&array, &freq, size).unwrap().stream_codes().into_iter().unzip();
+        let (actual_array, codes): (Vec<u8>, Vec<Codes>) = with_vecdeque(&array, &freq, size)
+            .unwrap()
+            .stream_codes()
+            .into_iter()
+            .unzip();
 
         let expected_codes: Vec<Codes> = vec![
             vec![false],

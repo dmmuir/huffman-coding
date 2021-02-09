@@ -1,5 +1,5 @@
-use std::convert::TryInto;
 use std::collections::HashMap;
+use std::convert::TryInto;
 
 use super::{
     huffman_tree,
@@ -16,9 +16,20 @@ pub fn encode(source: &[u8]) -> Vec<u8> {
         Some(tree) => tree.stream_codes(),
         None => Vec::new(),
     };
-    println!("{:#?}", key_pairs.iter().map(|(t, c)| (t, c.len())).collect::<Vec<(&u8, usize)>>());
+    println!(
+        "{:#?}",
+        key_pairs
+            .iter()
+            .map(|(t, c)| (t, c.len()))
+            .collect::<Vec<(&u8, usize)>>()
+    );
     let size = calculate_compression_size(freq_table, &key_pairs);
-    println!("Tokens len: {}, Hits len: {}, Size: {}", tokens.len(), hits.len() * 8, size);
+    println!(
+        "Tokens len: {}, Hits len: {}, Size: {}",
+        tokens.len(),
+        hits.len() * 8,
+        size
+    );
     println!("{:#?}", key_pairs);
     let lengths = usize_to_bytes(vec![tokens.len(), hits.len() * 8, size]);
     let buffer = swap_codes(source, key_pairs, size);
@@ -33,14 +44,22 @@ pub fn decode(source: &[u8]) -> Vec<u8> {
     let tokens_len = read_be_usize(&mut source);
     let hits_len = read_be_usize(&mut source);
     let compression_size = read_be_usize(&mut source);
-    println!("Tokens len: {}, Hits len: {}, Size: {}", tokens_len, hits_len, compression_size);
-    
+    println!(
+        "Tokens len: {}, Hits len: {}, Size: {}",
+        tokens_len, hits_len, compression_size
+    );
+
     let tokens = source[..tokens_len].to_vec();
     let hits = bytes_to_usize(&source[tokens_len..tokens_len + hits_len]);
     eprintln!("tokens: {:#?}, hits: {:#?}", tokens, hits);
     let size = hits.iter().sum::<usize>();
     let tree = huffman_tree::with_vecdeque(&tokens, &hits, size);
-    println!("{:#?}", huffman_tree::with_vecdeque(&tokens, &hits, size).unwrap().stream_codes());
+    println!(
+        "{:#?}",
+        huffman_tree::with_vecdeque(&tokens, &hits, size)
+            .unwrap()
+            .stream_codes()
+    );
     let compressed_source = source[tokens_len + hits_len..].to_vec();
     eprintln!("{:#?}", compressed_source);
     let codes = codes_from(compressed_source, compression_size);
@@ -91,10 +110,14 @@ fn usize_to_bytes(v: Vec<usize>) -> Vec<u8> {
 
 fn bytes_to_usize(v: &[u8]) -> Vec<usize> {
     v.chunks(8)
-        .filter_map(|chunk| chunk.try_into().map(|bytes| usize::from_be_bytes(bytes)).ok())
+        .filter_map(|chunk| {
+            chunk
+                .try_into()
+                .map(|bytes| usize::from_be_bytes(bytes))
+                .ok()
+        })
         .collect()
 }
-
 
 fn read_be_usize(input: &mut &[u8]) -> usize {
     let (int_bytes, rest) = input.split_at(std::mem::size_of::<usize>());
