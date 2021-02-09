@@ -9,33 +9,57 @@ use std::hash::{Hash, Hasher};
 use codes::Codes;
 use node::Node;
 
-pub fn with_vecdeque<T>(data: &[T], freqs: &[usize], size: usize) -> Vec<(T, Codes)>
+pub fn with_vecdeque<T>(data: &[T], freqs: &[usize], size: usize) -> Option<HuffmanTree<T>>
 where
     T: Debug + Hash + Clone,
 {
     if let Some(tree) = vecdeque::from(data, freqs, size) {
-        return HuffmanTree::from(tree, size).stream_codes();
+        return Some(HuffmanTree::from(tree, size));
     }
 
-    Vec::new()
+    None
 }
 
-struct HuffmanTree<T> {
-    id: u64,
+pub struct HuffmanTree<T> {
+    _id: u64,
     tree: Node<T>,
     size: usize,
 }
 
 impl<T> HuffmanTree<T>
 where
-    T: Hash,
+    T: Debug + Hash + Clone,
 {
-    fn from(tree: Node<T>, size: usize) -> Self {
-        let id = hash(&tree, size);
-        Self { id, tree, size }
+    pub fn from(tree: Node<T>, size: usize) -> Self {
+        let _id = hash(&tree, size);
+        Self { _id, tree, size }
     }
 
-    fn stream_codes<'a>(self) -> Vec<(T, Codes)>
+    pub fn read(&self, codes: Codes) -> Vec<T> {
+        let mut file = Vec::with_capacity(self.size);
+        let mut curr = &self.tree;
+
+        for code in codes {
+            if code {
+                if let Some(left) = curr.left_as_ref() {
+                    curr = left;
+                }
+            } else {
+                if let Some(right) = curr.right_as_ref() {
+                    curr = right;
+                }
+            }
+
+            if let Some(token) = curr.leaf() {
+                file.push(token.clone());
+                curr = &self.tree;
+            }
+        }
+
+        file
+    }
+
+    pub fn stream_codes<'a>(self) -> Vec<(T, Codes)>
     where
         T: Clone + Debug,
     {
@@ -85,7 +109,7 @@ mod test {
         let size = array.len();
 
         let (actual_array, codes): (Vec<u8>, Vec<Codes>) =
-            with_vecdeque(&array, freq, size).into_iter().unzip();
+            with_vecdeque(&array, &freq, size).unwrap().stream_codes().into_iter().unzip();
 
         let expected_codes: Vec<Codes> = vec![
             vec![false],

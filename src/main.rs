@@ -7,19 +7,22 @@ mod huffman_tree;
 
 use std::fs;
 
-use compress::encode;
+use compress::{decode, encode};
 
 fn main() {
     let matches = cli::app();
 
     let input_file = matches.value_of("filepath").unwrap();
     let source = fs::read(input_file).unwrap();
-    let action = matches.value_of("decode");
+    let filename: String;
 
-    let result = match action {
-        None => encode(&source),
-        Some(_) => vec![],
+    let result = if matches.is_present("decode") {
+        filename = input_file.replace(".huff", "");
+        decode(&source)
+    } else {
+        filename = format!("{}.huff", input_file);
+        encode(&source)
     };
 
-    fs::write(format!("{}.huff", input_file), result).unwrap();
+    fs::write(filename, result).unwrap();
 }
