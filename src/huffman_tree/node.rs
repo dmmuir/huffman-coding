@@ -3,7 +3,6 @@ use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 
 type BoxOption<T> = Option<Box<T>>;
-//pub type T = u8;
 
 #[derive(Clone, Debug)]
 enum NodeType<T> {

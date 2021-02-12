@@ -81,12 +81,12 @@ where
 {
     let mut dict = Vec::new();
     if let Some(left) = root.left_as_ref() {
-        array[top] = false;
+        array[top] = true;
         dict.append(&mut codes_from(left, array, top + 1));
     }
 
     if let Some(right) = root.right_as_ref() {
-        array[top] = true;
+        array[top] = false;
         dict.append(&mut codes_from(right, array, top + 1));
     }
 
@@ -115,16 +115,14 @@ mod test {
             .unzip();
 
         let expected_codes: Vec<Codes> = vec![
-            vec![false],
-            vec![true, false, false],
-            vec![true, false, true],
-            vec![true, true, false, false],
-            vec![true, true, false, true],
-            vec![true, true, true],
-        ]
-        .into_iter()
-        .map(|c| Codes::from(c))
-        .collect();
+            vec![true],
+            vec![false, true, true],
+            vec![false, true, false],
+            vec![false, false, true, true],
+            vec![false, false, true, false],
+            vec![false, false, false],
+        ];
+
         let expected_array = vec![b'f', b'c', b'd', b'a', b'b', b'e'];
         assert_eq!(expected_array, actual_array);
         assert_eq!(expected_codes, codes);

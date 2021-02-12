@@ -1,0 +1,2 @@
+command,mean,stddev,median,user,system,min,max
+huff -d -f ../bible-compression-challenge/data/asv_utf8.txt.huff,0.187025752235,0.004126372837784218,0.186050077835,0.15118168999999998,0.032501515,0.18233075983500002,0.19678480483500002

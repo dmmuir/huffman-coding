@@ -55,36 +55,3 @@ where
 
     second_queue.pop_front()
 }
-
-#[cfg(foo)]
-mod test {
-    use super::super::codes::Codes;
-    use super::*;
-
-    #[test]
-    fn _1() {
-        let array = vec!['a', 'b', 'c', 'd', 'e', 'f'];
-        let freq = vec![5, 9, 12, 13, 16, 45];
-
-        let size = array.len();
-
-        let (actual_array, codes): (Vec<String>, Vec<Codes>) =
-            from(array, freq, size).into_iter().unzip();
-
-        let expected_codes: Vec<Codes> = vec![
-            vec![false],
-            vec![true, false, false],
-            vec![true, false, true],
-            vec![true, true, false, false],
-            vec![true, true, false, true],
-            vec![true, true, true],
-        ]
-        .into_iter()
-        .map(|c| Codes::from(c))
-        .collect();
-
-        let expected_array = vec!["f", "c", "d", "a", "b", "e"];
-        assert_eq!(expected_array, actual_array);
-        assert_eq!(expected_codes, codes);
-    }
-}

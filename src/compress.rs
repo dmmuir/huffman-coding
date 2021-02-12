@@ -9,31 +9,16 @@ use super::{
 pub fn encode(source: &[u8]) -> Vec<u8> {
     let freq_table = freq_table(source);
     let (tokens, hits): (Vec<u8>, Vec<usize>) = sort_map(freq_table.clone()).into_iter().unzip();
-    eprintln!("tokens: {:#?}, hits: {:#?}", tokens, hits);
 
     let tree = huffman_tree::with_vecdeque(&tokens, &hits, source.len());
     let key_pairs = match tree {
         Some(tree) => tree.stream_codes(),
         None => Vec::new(),
     };
-    println!(
-        "{:#?}",
-        key_pairs
-            .iter()
-            .map(|(t, c)| (t, c.len()))
-            .collect::<Vec<(&u8, usize)>>()
-    );
+
     let size = calculate_compression_size(freq_table, &key_pairs);
-    println!(
-        "Tokens len: {}, Hits len: {}, Size: {}",
-        tokens.len(),
-        hits.len() * 8,
-        size
-    );
-    println!("{:#?}", key_pairs);
     let lengths = usize_to_bytes(vec![tokens.len(), hits.len() * 8, size]);
     let buffer = swap_codes(source, key_pairs, size);
-    eprintln!("{:#?}", buffer);
     let hits_as_bytes = usize_to_bytes(hits);
 
     vec![lengths, tokens, hits_as_bytes, buffer].concat()
@@ -44,24 +29,12 @@ pub fn decode(source: &[u8]) -> Vec<u8> {
     let tokens_len = read_be_usize(&mut source);
     let hits_len = read_be_usize(&mut source);
     let compression_size = read_be_usize(&mut source);
-    println!(
-        "Tokens len: {}, Hits len: {}, Size: {}",
-        tokens_len, hits_len, compression_size
-    );
 
     let tokens = source[..tokens_len].to_vec();
     let hits = bytes_to_usize(&source[tokens_len..tokens_len + hits_len]);
-    eprintln!("tokens: {:#?}, hits: {:#?}", tokens, hits);
     let size = hits.iter().sum::<usize>();
     let tree = huffman_tree::with_vecdeque(&tokens, &hits, size);
-    println!(
-        "{:#?}",
-        huffman_tree::with_vecdeque(&tokens, &hits, size)
-            .unwrap()
-            .stream_codes()
-    );
     let compressed_source = source[tokens_len + hits_len..].to_vec();
-    eprintln!("{:#?}", compressed_source);
     let codes = codes_from(compressed_source, compression_size);
 
     match tree {
@@ -84,7 +57,8 @@ fn freq_table(data: &[u8]) -> HashMap<u8, usize> {
 
 fn sort_map(map: HashMap<u8, usize>) -> Vec<(u8, usize)> {
     let mut table: Vec<(u8, usize)> = map.into_iter().collect();
-    table.sort_by_key(|record| record.1);
+    table.sort_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(&a.0)));
+
     table
 }
 
@@ -133,4 +107,27 @@ fn calculate_compression_size(
         .iter()
         .filter_map(|(k, codes)| freq_table.get(k).map(|count| count * codes.len()))
         .sum::<usize>()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn abcde() {
+        let input = b"aaaaaabccccccddeeeee";
+        let codes = encode(input);
+        let decode = decode(&codes);
+
+        assert_eq!(&input[..], decode);
+    }
+
+    #[test]
+    fn geeksforgeeks() {
+        let input = b"geeksforgeeks";
+        let codes = encode(input);
+        let decode = decode(&codes);
+
+        assert_eq!(&input[..], decode);
+    }
 }
