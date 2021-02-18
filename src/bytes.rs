@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 pub type Codes = Vec<bool>;
 
 pub fn bytes_from(bits: Codes) -> Vec<u8> {
@@ -6,13 +8,14 @@ pub fn bytes_from(bits: Codes) -> Vec<u8> {
 
 fn bools_to_bits(chunk: &[bool]) -> u8 {
     let mut byte: u8 = 0;
-    chunk.iter().enumerate().for_each(|(bit, value)| {
+
+    for (bit, value) in chunk.iter().enumerate() {
         if *value {
             byte |= 1 << bit;
         } else {
             byte &= !(1 << bit);
         }
-    });
+    }
 
     byte
 }
@@ -36,6 +39,30 @@ fn byte_to_bools(byte: u8) -> [bool; 8] {
     }
 
     codes
+}
+
+pub fn usize_to_bytes(v: Vec<usize>) -> Vec<u8> {
+    v.into_iter()
+        .map(|u| u.to_be_bytes().to_vec())
+        .flatten()
+        .collect()
+}
+
+pub fn bytes_to_usize(v: &[u8]) -> Vec<usize> {
+    v.chunks(8)
+        .filter_map(|chunk| {
+            chunk
+                .try_into()
+                .map(|bytes| usize::from_be_bytes(bytes))
+                .ok()
+        })
+        .collect()
+}
+
+pub fn read_be_usize(input: &mut &[u8]) -> usize {
+    let (int_bytes, rest) = input.split_at(std::mem::size_of::<usize>());
+    *input = rest;
+    usize::from_be_bytes(int_bytes.try_into().unwrap())
 }
 
 #[cfg(test)]

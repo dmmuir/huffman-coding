@@ -20,5 +20,12 @@ pub fn app() -> ArgMatches<'static> {
                 .help("Decode the encoded file to it's original, uncompressed format.")
                 .takes_value(false),
         )
+        .arg(
+            Arg::with_name("stats")
+                .short("s")
+                .long("stats")
+                .help("Retrieves statistics on the compressed file.")
+                .takes_value(false),
+        )
         .get_matches()
 }

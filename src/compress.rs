@@ -1,23 +1,20 @@
 use std::collections::HashMap;
-use std::convert::TryInto;
 
-use super::{
-    huffman_tree,
-    huffman_tree::codes::{bytes_from, codes_from, Codes},
-};
+use super::huffman_tree::tree;
+use crate::bytes::{bytes_from, bytes_to_usize, codes_from, read_be_usize, usize_to_bytes, Codes};
 
 pub fn encode(source: &[u8]) -> Vec<u8> {
     let freq_table = freq_table(source);
     let (tokens, hits): (Vec<u8>, Vec<usize>) = sort_map(freq_table.clone()).into_iter().unzip();
 
-    let tree = huffman_tree::with_vecdeque(&tokens, &hits, source.len());
+    let tree = tree::with_vecdeque(&tokens, &hits, source.len());
     let key_pairs = match tree {
         Some(tree) => tree.stream_codes(),
         None => Vec::new(),
     };
 
     let size = calculate_compression_size(freq_table, &key_pairs);
-    let lengths = usize_to_bytes(vec![tokens.len(), hits.len() * 8, size]);
+    let lengths = usize_to_bytes(vec![tokens.len(), size]);
     let buffer = swap_codes(source, key_pairs, size);
     let hits_as_bytes = usize_to_bytes(hits);
 
@@ -27,13 +24,13 @@ pub fn encode(source: &[u8]) -> Vec<u8> {
 pub fn decode(source: &[u8]) -> Vec<u8> {
     let mut source = source;
     let tokens_len = read_be_usize(&mut source);
-    let hits_len = read_be_usize(&mut source);
+    let hits_len = tokens_len * 8; //read_be_usize(&mut source);
     let compression_size = read_be_usize(&mut source);
 
     let tokens = source[..tokens_len].to_vec();
     let hits = bytes_to_usize(&source[tokens_len..tokens_len + hits_len]);
     let size = hits.iter().sum::<usize>();
-    let tree = huffman_tree::with_vecdeque(&tokens, &hits, size);
+    let tree = tree::with_vecdeque(&tokens, &hits, size);
     let compressed_source = source[tokens_len + hits_len..].to_vec();
     let codes = codes_from(compressed_source, compression_size);
 
@@ -73,30 +70,6 @@ fn swap_codes(source: &[u8], key_pairs: Vec<(u8, Codes)>, size: usize) -> Vec<u8
     }
 
     bytes_from(buffer)
-}
-
-fn usize_to_bytes(v: Vec<usize>) -> Vec<u8> {
-    v.into_iter()
-        .map(|u| u.to_be_bytes().to_vec())
-        .flatten()
-        .collect()
-}
-
-fn bytes_to_usize(v: &[u8]) -> Vec<usize> {
-    v.chunks(8)
-        .filter_map(|chunk| {
-            chunk
-                .try_into()
-                .map(|bytes| usize::from_be_bytes(bytes))
-                .ok()
-        })
-        .collect()
-}
-
-fn read_be_usize(input: &mut &[u8]) -> usize {
-    let (int_bytes, rest) = input.split_at(std::mem::size_of::<usize>());
-    *input = rest;
-    usize::from_be_bytes(int_bytes.try_into().unwrap())
 }
 
 fn calculate_compression_size(
