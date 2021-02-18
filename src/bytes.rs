@@ -61,7 +61,10 @@ pub fn bytes_to_usize(v: &[u8]) -> Vec<usize> {
 
 pub fn read_be_usize(input: &[u8]) -> (usize, &[u8]) {
     let (int_bytes, remaining) = input.split_at(std::mem::size_of::<usize>());
-    (usize::from_be_bytes(int_bytes.try_into().unwrap()), remaining)
+    (
+        usize::from_be_bytes(int_bytes.try_into().unwrap()),
+        remaining,
+    )
 }
 
 #[cfg(test)]
