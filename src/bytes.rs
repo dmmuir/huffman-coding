@@ -20,11 +20,11 @@ fn bools_to_bits(chunk: &[bool]) -> u8 {
     byte
 }
 
-pub fn codes_from(bytes: Vec<u8>, _size: usize) -> Vec<bool> {
+pub fn codes_from(bytes: &[u8], _size: usize) -> Vec<bool> {
     let mut codes = Vec::with_capacity(bytes.len() * 8);
 
     for byte in bytes {
-        for bit in &byte_to_bools(byte) {
+        for bit in &byte_to_bools(*byte) {
             codes.push(*bit);
         }
     }
@@ -59,10 +59,9 @@ pub fn bytes_to_usize(v: &[u8]) -> Vec<usize> {
         .collect()
 }
 
-pub fn read_be_usize(input: &mut &[u8]) -> usize {
-    let (int_bytes, rest) = input.split_at(std::mem::size_of::<usize>());
-    *input = rest;
-    usize::from_be_bytes(int_bytes.try_into().unwrap())
+pub fn read_be_usize(input: &[u8]) -> (usize, &[u8]) {
+    let (int_bytes, remaining) = input.split_at(std::mem::size_of::<usize>());
+    (usize::from_be_bytes(int_bytes.try_into().unwrap()), remaining)
 }
 
 #[cfg(test)]
@@ -71,11 +70,11 @@ mod test {
 
     #[test]
     fn there_and_back_again() {
-        let expected = b"There and back again. A hobbits tale, by Bilbo Baggins".to_vec();
+        let expected = b"There and back again. A hobbits tale, by Bilbo Baggins";
         let len = expected.len() * 8;
-        let codes = codes_from(expected.clone(), len);
+        let codes = codes_from(expected, len);
         let actual = bytes_from(codes);
 
-        assert_eq!(expected, actual);
+        assert_eq!(expected, actual.as_slice());
     }
 }

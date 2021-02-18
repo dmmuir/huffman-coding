@@ -6,6 +6,7 @@ extern crate prettytable;
 mod bytes;
 mod cli;
 mod compress;
+mod format;
 mod huffman_tree;
 mod stats;
 

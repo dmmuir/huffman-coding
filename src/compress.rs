@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use super::huffman_tree::tree;
-use crate::bytes::{bytes_from, bytes_to_usize, codes_from, read_be_usize, usize_to_bytes, Codes};
+use crate::bytes::{bytes_from, codes_from, usize_to_bytes, Codes};
+use crate::format::{read_dictionary, read_sizes};
 
 pub fn encode(source: &[u8]) -> Vec<u8> {
     let freq_table = freq_table(source);
@@ -13,26 +14,22 @@ pub fn encode(source: &[u8]) -> Vec<u8> {
         None => Vec::new(),
     };
 
-    let size = calculate_compression_size(freq_table, &key_pairs);
-    let lengths = usize_to_bytes(vec![tokens.len(), size]);
-    let buffer = swap_codes(source, key_pairs, size);
+    let size_when_compressed = calculate_compression_size(freq_table, &key_pairs);
+    let lengths = usize_to_bytes(vec![tokens.len(), size_when_compressed]);
+    let buffer = swap_codes(source, key_pairs, size_when_compressed);
     let hits_as_bytes = usize_to_bytes(hits);
 
     vec![lengths, tokens, hits_as_bytes, buffer].concat()
 }
 
 pub fn decode(source: &[u8]) -> Vec<u8> {
-    let mut source = source;
-    let tokens_len = read_be_usize(&mut source);
-    let hits_len = tokens_len * 8; //read_be_usize(&mut source);
-    let compression_size = read_be_usize(&mut source);
+    let (tokens, hits) = read_dictionary(source);
+    let (dictionary_size, size_when_compressed, remaining_source) = read_sizes(source);
 
-    let tokens = source[..tokens_len].to_vec();
-    let hits = bytes_to_usize(&source[tokens_len..tokens_len + hits_len]);
     let size = hits.iter().sum::<usize>();
     let tree = tree::with_vecdeque(&tokens, &hits, size);
-    let compressed_source = source[tokens_len + hits_len..].to_vec();
-    let codes = codes_from(compressed_source, compression_size);
+    let compressed_source = &remaining_source[dictionary_size..];
+    let codes = codes_from(compressed_source, size_when_compressed);
 
     match tree {
         Some(tree) => tree.read(codes),
