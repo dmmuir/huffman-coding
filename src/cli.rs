@@ -32,9 +32,9 @@ pub fn app() -> ArgMatches<'static> {
                 .help("Retrieves statistics on the compressed file.")
                 .arg(
                     Arg::with_name("file")
-                    .help("The file to get stats from")
-                    .takes_value(true),
-                )
+                        .help("The file to get stats from")
+                        .takes_value(true),
+                ),
         )
         .get_matches()
 }

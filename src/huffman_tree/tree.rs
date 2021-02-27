@@ -37,10 +37,8 @@ where
                 if let Some(left) = curr.left_as_ref() {
                     curr = left;
                 }
-            } else {
-                if let Some(right) = curr.right_as_ref() {
-                    curr = right;
-                }
+            } else if let Some(right) = curr.right_as_ref() {
+                curr = right;
             }
 
             if let Some(token) = curr.leaf() {
@@ -52,7 +50,7 @@ where
         file
     }
 
-    pub fn stream_codes<'a>(self) -> Vec<(T, Codes)>
+    pub fn stream_codes(self) -> Vec<(T, Codes)>
     where
         T: Clone + Debug,
     {

@@ -34,32 +34,29 @@ pub fn codes_from(bytes: &[u8], _size: usize) -> Vec<bool> {
 
 fn byte_to_bools(byte: u8) -> [bool; 8] {
     let mut codes = [true; 8];
-    for bit_index in 0..8 {
-        codes[bit_index] = (byte & (1 << bit_index)) != 0;
+    for (bit_index, bit) in codes.iter_mut().enumerate() {
+        *bit = (byte & (1 << bit_index)) != 0;
     }
 
     codes
 }
 
 pub fn usize_to_bytes(v: Vec<usize>) -> Vec<u8> {
-    let bytes = v.into_iter()
+    v.into_iter()
         .map(|u| u.to_be_bytes().to_vec())
         .flatten()
-        .collect();
-
-    bytes
+        .collect()
 }
 
 pub fn usize_to_smallest_bytes(v: Vec<usize>) -> (u8, Vec<u8>) {
     let byte_size = smallest_byte_representation(&v);
-    let bytes = v.into_iter()
-        .map(|u| {
-            match byte_size {
-                8 => (u as u8).to_be_bytes().to_vec(),
-                16 => (u as u16).to_be_bytes().to_vec(),
-                32 => (u as u32).to_be_bytes().to_vec(),
-                _ => u.to_be_bytes().to_vec(),
-            }
+    let bytes = v
+        .into_iter()
+        .map(|u| match byte_size {
+            8 => (u as u8).to_be_bytes().to_vec(),
+            16 => (u as u16).to_be_bytes().to_vec(),
+            32 => (u as u32).to_be_bytes().to_vec(),
+            _ => u.to_be_bytes().to_vec(),
         })
         .flatten()
         .collect();
@@ -68,38 +65,32 @@ pub fn usize_to_smallest_bytes(v: Vec<usize>) -> (u8, Vec<u8>) {
 }
 
 fn smallest_byte_representation(v: &[usize]) -> u8 {
-   let max = *v.into_iter().max().unwrap_or(&0); 
+    let max = *v.iter().max().unwrap_or(&0);
 
-   if max <= u16::MAX as usize {
-       if max > u8::MAX as usize {
-           16
-       } else {
-           8
-       }
-   } else if max <= u32::MAX as usize {
-       32
-   } else {
-       64
-   }
-
+    if max <= u16::MAX as usize {
+        if max <= u8::MAX as usize {
+            8
+        } else {
+            16
+        }
+    } else if max <= u32::MAX as usize {
+        32
+    } else {
+        64
+    }
 }
 
 pub fn bytes_to_usize(bit_count: usize, v: &[u8]) -> Vec<usize> {
     let byte_size = bit_count / 8;
     v.chunks(byte_size)
         .map(|chunk| {
-            let mut buffer = vec![0u8; 8-byte_size];
+            let mut buffer = vec![0u8; 8 - byte_size];
             for b in chunk {
                 buffer.push(*b)
             }
             buffer
         })
-        .filter_map(|chunk| {
-            chunk
-                .try_into()
-                .map(|bytes| usize::from_be_bytes(bytes))
-                .ok()
-        })
+        .filter_map(|chunk| chunk.try_into().map(usize::from_be_bytes).ok())
         .collect()
 }
 

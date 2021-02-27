@@ -29,7 +29,7 @@ where
     let mut first_queue = VecDeque::with_capacity(size);
     let mut second_queue = VecDeque::with_capacity(size);
 
-    data.into_iter().zip(freq.into_iter()).for_each(|(d, f)| {
+    data.iter().zip(freq.iter()).for_each(|(d, f)| {
         first_queue.push_back(Node::new_leaf(d.clone(), *f));
     });
 

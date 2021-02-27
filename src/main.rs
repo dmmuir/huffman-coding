@@ -13,18 +13,21 @@ mod stats;
 use clap::ArgMatches;
 
 use std::fs;
-use std::{io, io::{Read, Write}};
+use std::{
+    io,
+    io::{Read, Write},
+};
 
 use compress::{decode, encode};
 
-const FILE_READ_FAILED: &'static str = "Problem reading from source";
+const FILE_READ_FAILED: &str = "Problem reading from source";
 
 fn main() {
     let matches = cli::app();
 
     let mut filename = filename(&matches);
     let command = command(&matches);
-    
+
     let output = match command {
         Command::Process => {
             let source = source(&matches).expect(FILE_READ_FAILED);
@@ -35,12 +38,12 @@ fn main() {
                 filename = filename.map(|name| format!("{}.huff", name));
                 Some(encode(&source))
             }
-        },
+        }
         Command::Stats(file) => {
             let source = fs::read(file).expect(FILE_READ_FAILED);
             stats::print(&source);
             None
-        },
+        }
     };
 
     if let Some(output) = output {
@@ -63,7 +66,6 @@ fn source(matches: &ArgMatches) -> io::Result<Vec<u8>> {
     let mut stdin = io::stdin();
     stdin.read_to_end(&mut source)?;
     Ok(source)
-
 }
 
 fn filename(matches: &ArgMatches) -> Option<String> {
@@ -80,6 +82,5 @@ fn command(matches: &ArgMatches) -> Command {
 
 enum Command {
     Process,
-    Stats(String)
+    Stats(String),
 }
-

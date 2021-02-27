@@ -1,6 +1,5 @@
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::fmt::Debug;
-use std::hash::{Hash, Hasher};
 
 type BoxOption<T> = Option<Box<T>>;
 
@@ -11,18 +10,6 @@ enum NodeType<T> {
         left: BoxOption<Node<T>>,
         right: BoxOption<Node<T>>,
     },
-}
-
-impl<T: Hash> Hash for NodeType<T> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            Self::Leaf(t) => t.hash(state),
-            Self::Branch { left, right } => {
-                left.as_ref().hash(state);
-                right.as_ref().hash(state);
-            }
-        }
-    }
 }
 
 impl<T> NodeType<T> {
@@ -74,7 +61,7 @@ impl<T> NodeType<T> {
     }
 }
 
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Debug)]
 pub struct Node<T> {
     pub freq: usize,
     node: NodeType<T>,
