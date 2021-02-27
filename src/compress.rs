@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::huffman_tree::tree;
-use crate::bytes::{bytes_from, codes_from, usize_to_bytes, Codes};
+use crate::bytes::{bytes_from, codes_from, usize_to_bytes, usize_to_smallest_bytes, Codes};
 use crate::format::{read_dictionary, read_sizes};
 
 pub fn encode(source: &[u8]) -> Vec<u8> {
@@ -15,11 +15,11 @@ pub fn encode(source: &[u8]) -> Vec<u8> {
     };
 
     let size_when_compressed = calculate_compression_size(freq_table, &key_pairs);
-    let lengths = usize_to_bytes(vec![tokens.len(), size_when_compressed]);
     let buffer = swap_codes(source, key_pairs, size_when_compressed);
-    let hits_as_bytes = usize_to_bytes(hits);
+    let lengths = usize_to_bytes(vec![tokens.len(), size_when_compressed]);
+    let (byte_size, hits_as_bytes) = usize_to_smallest_bytes(hits);
 
-    vec![lengths, tokens, hits_as_bytes, buffer].concat()
+    vec![lengths, vec![byte_size], tokens, hits_as_bytes, buffer].concat()
 }
 
 pub fn decode(source: &[u8]) -> Vec<u8> {
