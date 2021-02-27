@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 
 pub fn app() -> ArgMatches<'static> {
     App::new("huff")
@@ -17,15 +17,24 @@ pub fn app() -> ArgMatches<'static> {
             Arg::with_name("decode")
                 .short("d")
                 .long("decode")
-                .help("Decode the encoded file to it's original, uncompressed format.")
+                .help("Decode the encoded source to it's original, uncompressed format.")
                 .takes_value(false),
         )
         .arg(
             Arg::with_name("stats")
-                .short("s")
+                .short("stats")
                 .long("stats")
-                .help("Retrieves statistics on the compressed file.")
+                .help("Encodes source to produce compression statitics.")
                 .takes_value(false),
+        )
+        .subcommand(
+            SubCommand::with_name("stats")
+                .help("Retrieves statistics on the compressed file.")
+                .arg(
+                    Arg::with_name("file")
+                    .help("The file to get stats from")
+                    .takes_value(true),
+                )
         )
         .get_matches()
 }
