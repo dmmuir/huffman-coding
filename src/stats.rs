@@ -35,7 +35,7 @@ pub fn print(source: &[u8]) {
     );
     println!("Dictionary stats:");
     println!("Tokens:\t{}", tokens.len());
-    println!("Hits size:\t{}", hits.len() * 8);
+    println!("Hits size:\t{}", dictionary_size - tokens.len());
     println!("Total bytes:\t{}", dictionary_size);
 
     print_table(rows);
